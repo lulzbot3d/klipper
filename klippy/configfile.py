@@ -431,5 +431,14 @@ class PrinterConfig:
             msg = "Unable to write config file during SAVE_CONFIG"
             logging.exception(msg)
             raise gcode.error(msg)
-        # Request a restart
-        gcode.request_restart('restart')
+
+        # If RESTART=1, request a restart. Otherwise, just update the config file.
+        # Borrowed from Kalico firmware's SAVE_CONFIG implementation.
+        require_restart = gcmd.get_int("RESTART", 1, minval=0, maxval=1)
+        if require_restart:
+            # Request a restart
+            gcode.request_restart("restart")
+        else:
+            # flag config updated to false since config saved with no restart
+            self.save_config_pending = False
+            gcode.respond_info("Config update without restart successful")
